@@ -9,14 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\Files\" />
-    <Folder Include="View\" />
-    <Folder Include="ViewModel\" />
+    <PackageReference Include="EPPlus" Version="7.4.1" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
+    <PackageReference Include="MvvmLightLibs" Version="5.4.1.1" />
+    <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="7.4.1" />
-    <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
+    <None Update="Resources\Files\data.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

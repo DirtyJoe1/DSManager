@@ -1,0 +1,68 @@
+﻿<Window x:Class="DSManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DSManager"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:viewmodel="clr-namespace:DSManager.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:MainWindowViewModel}"
+        mc:Ignorable="d"
+        Title="BDSM" Height="600" Width="1200">
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="6*"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Margin="10" Orientation="Horizontal">
+                <Button VerticalAlignment="Center"
+                        x:Name="SaveButton"
+                        Command="{Binding SaveDataGridCommand}"
+                        Width="80"
+                        Height="80"
+                        Content="{materialDesign:PackIcon Kind=ContentSave,Size=40}"/>
+                <Button VerticalAlignment="Center"
+                        x:Name="AddNewEntryButton"
+                        Width="80"
+                        Height="80"
+                        Content="{materialDesign:PackIcon Kind=Add,Size=40}"
+                        Command="{Binding OpenAddNewEntryWindowCommand}"/>
+                <Button VerticalAlignment="Center"
+                        x:Name="ExportFileButton"
+                        Command="{Binding ExportDataCommand}"
+                        Width="80"
+                        Height="80"
+                        Content="{materialDesign:PackIcon Kind=Export,Size=40}"/>
+                <Button VerticalAlignment="Center"
+                        x:Name="ImportFileButton"
+                        Command="{Binding ImportDataCommand}"
+                        Width="80"
+                        Height="80"
+                        Content="{materialDesign:PackIcon Kind=Import,Size=40}"/>
+            </StackPanel>
+            <DataGrid x:Name="Table" Grid.Row="1" 
+                      AutoGenerateColumns="False" 
+                      GridLinesVisibility="All"
+                      EnableColumnVirtualization="True" 
+                      EnableRowVirtualization="True"
+                      CanUserDeleteRows="True"
+                      CanUserAddRows="False"
+                      CanUserReorderColumns="True"
+                      CanUserSortColumns="True"
+                      CanUserResizeColumns="True"
+                      ItemsSource="{Binding Entries, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                <DataGrid.Resources>
+                    <CollectionViewSource x:Key="Departments" Source="{Binding Departments}"/>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="№" Binding="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="ФИО" Binding="{Binding FIO, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridComboBoxColumn Header="Отделение/Подразделение" SelectedItemBinding="{Binding Department}" ItemsSource="{Binding Source={StaticResource Departments}, UpdateSourceTrigger=PropertyChanged}"/>
+                    <DataGridTextColumn Header="Дата выпуска" Binding="{Binding Start, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:dd.MM.yyyy}', ConverterCulture=en-NZ}"/>
+                    <DataGridTextColumn Header="Дата окончания" Binding="{Binding End, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:dd.MM.yyyy}', ConverterCulture=en-NZ}"/>
+                    <DataGridTextColumn Header="Дата установки" Binding="{Binding Setup, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:dd.MM.yyyy}', ConverterCulture=en-NZ}"/>
+                    <DataGridComboBoxColumn Header="Статус" SelectedItemBinding="{Binding Status}" ItemsSource="{Binding Source={StaticResource enum}}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Grid>
+</Window>

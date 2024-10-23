@@ -3,12 +3,15 @@ using OfficeOpenXml;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using static MaterialDesignThemes.Wpf.Theme.ToolBar;
 
 namespace DSManager.Resources.Services
 {
@@ -16,6 +19,7 @@ namespace DSManager.Resources.Services
     {
         public static DataTable GetDataTableFromDataGrid<T>(IEnumerable list)
         {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
             DataTable table = new();
             for (int i = 0; i < props.Count; i++)
@@ -47,14 +51,16 @@ namespace DSManager.Resources.Services
 
             return table;
         }
-        public static IEnumerable<DataModel> ReadExcelFile(string filePath, int worksheetIndex)
+        public static IEnumerable<DataModel> ReadExcelFile(string filePath)
         {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(filePath);
-            var worksheet = package.Workbook.Worksheets[worksheetIndex];
+            var worksheet = package.Workbook.Worksheets[0];
             for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
             {
                 yield return new DataModel
                 {
+                    Id = row,
                     FIO = worksheet.Cells[row, 2].Value.ToString(),
                     Department = worksheet.Cells[row, 3].Value.ToString(),
                     Setup = DateTime.Parse(worksheet.Cells[row, 4].Value.ToString()),
@@ -64,17 +70,38 @@ namespace DSManager.Resources.Services
                 };
             }
         }
-        public static void SaveDataGrid(DataTable data, string filePath, bool backup)
+        public static IEnumerable<string> ReadDepartments(string filePath)
         {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using var package = new ExcelPackage(filePath);
+            var worksheet = package.Workbook.Worksheets[1];
+            for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
+            {
+                yield return worksheet.Cells[row, 1].Value.ToString();
+            }
+        }
+        public static int GetEntriesCount(string filePath)
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(filePath);
             var worksheet = package.Workbook.Worksheets[0];
-            int rowCount = 0;
-            for (int i = 0; i < data.Rows.Count; i++)
+            return worksheet.Dimension.End.Row;
+        }
+        public static void SaveDataGrid(ObservableCollection<DataModel> data, string filePath, bool backup)
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using var package = new ExcelPackage(filePath);
+            var worksheet = package.Workbook.Worksheets[0];
+            int rowCount = 1;
+            foreach (var item in data)
             {
-                for (int j = 0; j < data.Columns.Count; j++)
-                {
-                    worksheet.Cells[rowCount + 1, j + 1].Value = data.Rows[i][j];
-                }
+                worksheet.Cells[rowCount, 1].Value = item.Id;
+                worksheet.Cells[rowCount, 2].Value = item.FIO;
+                worksheet.Cells[rowCount, 3].Value = item.Department;
+                worksheet.Cells[rowCount, 4].Value = $"{item.Start:dd.MM.yyyy}";
+                worksheet.Cells[rowCount, 5].Value = $"{item.End:dd.MM.yyyy}";
+                worksheet.Cells[rowCount, 6].Value = $"{item.Setup:dd.MM.yyyy}";
+                worksheet.Cells[rowCount, 7].Value = item.Status.ToString();
                 rowCount++;
             }
             package.Save();
@@ -107,19 +134,22 @@ namespace DSManager.Resources.Services
         }
         public static void AddData(string filePath, string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(filePath);
             var worksheet = package.Workbook.Worksheets[0];
             var lastrow = worksheet.Dimension.Rows + 1;
-            worksheet.Cells[lastrow, 1].Value = fio;
-            worksheet.Cells[lastrow, 2].Value = otdel;
-            worksheet.Cells[lastrow, 3].Value = setup.ToString();
-            worksheet.Cells[lastrow, 4].Value = start.ToString();
-            worksheet.Cells[lastrow, 5].Value = end.ToString();
-            worksheet.Cells[lastrow, 6].Value = status.ToString();
+            worksheet.Cells[lastrow, 1].Value = lastrow;
+            worksheet.Cells[lastrow, 2].Value = fio;
+            worksheet.Cells[lastrow, 3].Value = otdel;
+            worksheet.Cells[lastrow, 4].Value = $"{start:dd.MM.yyyy}";
+            worksheet.Cells[lastrow, 5].Value = $"{end:dd.MM.yyyy}";
+            worksheet.Cells[lastrow, 6].Value = $"{setup:dd.MM.yyyy}";
+            worksheet.Cells[lastrow, 7].Value = status.ToString();
             package.Save();
         }
         public static void DeleteRowFromExcelFile(string filePath, int rowIndex)
         {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(filePath);
             var worksheet = package.Workbook.Worksheets[0];
             worksheet.DeleteRow(rowIndex);
@@ -127,24 +157,30 @@ namespace DSManager.Resources.Services
         }
         public static void AppendDataFromExcel(string sourceFilePath, string targetFilePath)
         {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var sourcePackage = new ExcelPackage(sourceFilePath);
             using var targetPackage = new ExcelPackage(targetFilePath);
-            var sourceWorksheet = sourcePackage.Workbook.Worksheets.First();
-            var targetWorksheet = targetPackage.Workbook.Worksheets.First();
-            var sourceData = ReadExcelFile(sourceFilePath, 1).ToList();
+            var sourceWorksheet = sourcePackage.Workbook.Worksheets[0];
+            var targetWorksheet = targetPackage.Workbook.Worksheets[0];
+            var sourceData = ReadExcelFile(sourceFilePath).ToList();
             int maxRows = targetWorksheet.Dimension.End.Row;
             for (int i = 1; i <= sourceData.Count; i++)
             {
                 var rowData = sourceData[i - 1];
-                targetWorksheet.Cells[maxRows + i, 1].Value = rowData.FIO;
-                targetWorksheet.Cells[maxRows + i, 2].Value = rowData.Department;
-                targetWorksheet.Cells[maxRows + i, 3].Value = rowData.Setup.ToString();
-                targetWorksheet.Cells[maxRows + i, 4].Value = rowData.Start.ToString();
-                targetWorksheet.Cells[maxRows + i, 5].Value = rowData.End.ToString();
-                targetWorksheet.Cells[maxRows + i, 6].Value = rowData.Status.ToString();
+                targetWorksheet.Cells[maxRows + i, 1].Value = maxRows + i;
+                targetWorksheet.Cells[maxRows + i, 2].Value = rowData.FIO;
+                targetWorksheet.Cells[maxRows + i, 3].Value = rowData.Department;
+                targetWorksheet.Cells[maxRows + i, 4].Value = rowData.Setup.ToString();
+                targetWorksheet.Cells[maxRows + i, 5].Value = rowData.Start.ToString();
+                targetWorksheet.Cells[maxRows + i, 6].Value = rowData.End.ToString();
+                targetWorksheet.Cells[maxRows + i, 7].Value = rowData.Status.ToString();
             }
             targetPackage.Save();
             sourcePackage.Dispose();
+        }
+        public static void ExportFile(string path)
+        {
+            File.Copy(Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Files", "data.xlsx"), Path.Combine(path, "export.xlsx"), true);
         }
     }
 }

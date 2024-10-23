@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:DSManager"
              xmlns:core="clr-namespace:System;assembly=mscorlib"
              xmlns:model="clr-namespace:DSManager.Model"
-             StartupUri="MainWindow.xaml">
+             StartupUri="View/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ObjectDataProvider x:Key="enum" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
