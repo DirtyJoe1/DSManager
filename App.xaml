@@ -5,6 +5,7 @@
              xmlns:core="clr-namespace:System;assembly=mscorlib"
              xmlns:model="clr-namespace:DSManager.Model"
              xmlns:Services="clr-namespace:DSManager.Resources.Services"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              StartupUri="View/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
@@ -16,8 +17,11 @@
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <ResourceDictionary.MergedDictionaries>
-                <!--<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />-->
-                <ResourceDictionary Source="Resources/Style/Style.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+                <materialDesign:CustomColorTheme BaseTheme="Dark" 
+                                   PrimaryColor="#4d2569" 
+                                   SecondaryColor="#3a1952" />
+            <ResourceDictionary Source="Resources/Style/Style.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

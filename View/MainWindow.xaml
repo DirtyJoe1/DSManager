@@ -7,7 +7,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:viewmodel="clr-namespace:DSManager.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:MainWindowViewModel}"
         mc:Ignorable="d"
         Title="BDSM" Height="600" Width="1200">
-    <Grid>
+    <Grid Background="{DynamicResource BackgroundColor}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="1*"/>
@@ -15,33 +15,25 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="10" Orientation="Horizontal">
                 <Button VerticalAlignment="Center"
-                        x:Name="SaveButton"
+                        Style="{DynamicResource BaseButtonStyle}"
                         Command="{Binding SaveDataGridCommand}"
-                        Width="80"
-                        Height="80"
                         Content="{materialDesign:PackIcon Kind=ContentSave,Size=40}"/>
                 <Button VerticalAlignment="Center"
-                        x:Name="AddNewEntryButton"
-                        Width="80"
-                        Height="80"
+                        Style="{DynamicResource BaseButtonStyle}"
                         Content="{materialDesign:PackIcon Kind=Add,Size=40}"
                         Command="{Binding OpenAddNewEntryWindowCommand}"/>
                 <Button VerticalAlignment="Center"
-                        x:Name="ExportFileButton"
+                        Style="{DynamicResource BaseButtonStyle}"
                         Command="{Binding ExportDataCommand}"
-                        Width="80"
-                        Height="80"
                         Content="{materialDesign:PackIcon Kind=Export,Size=40}"/>
                 <Button VerticalAlignment="Center"
-                        x:Name="ImportFileButton"
+                        Style="{DynamicResource BaseButtonStyle}"
                         Command="{Binding ImportDataCommand}"
-                        Width="80"
-                        Height="80"
                         Content="{materialDesign:PackIcon Kind=Import,Size=40}"/>
             </StackPanel>
             <DataGrid x:Name="Table" Grid.Row="1" 
                       AutoGenerateColumns="False" 
-                      GridLinesVisibility="All"
+                      GridLinesVisibility="Horizontal"
                       EnableColumnVirtualization="True" 
                       EnableRowVirtualization="True"
                       CanUserDeleteRows="False"
@@ -50,7 +42,9 @@
                       CanUserSortColumns="True"
                       CanUserResizeColumns="True"
                       SelectedItem="{Binding SelectedItem}"
-                      ItemsSource="{Binding Entries, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                      ItemsSource="{Binding Entries, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                      BorderBrush="Gray"
+                      BorderThickness="1">
                 <DataGrid.Resources>
                     <CollectionViewSource x:Key="Departments"
                                           Source="{Binding Departments}"/>
@@ -70,19 +64,48 @@
                     <DataGridComboBoxColumn Header="Отделение/Подразделение" 
                                             SelectedItemBinding="{Binding Department}" 
                                             ItemsSource="{Binding Source={StaticResource Departments}, UpdateSourceTrigger=PropertyChanged}"/>
-                    <DataGridTextColumn Header="Дата выпуска"
-                                        Binding="{Binding Start, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" />
-                    <DataGridTextColumn Header="Дата окончания"
-                                        Binding="{Binding End, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
+                    <DataGridTemplateColumn Header="Дата выпуска" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding Start, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding Start, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Дата окончания" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding End, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding End, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                        <DataGridTemplateColumn.CellStyle>
+                            <Style TargetType="DataGridCell">
                                 <Setter Property="Background"
                                         Value="{Binding End, Converter={StaticResource DateBackgroundColorConverter}}"/>
                             </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Дата установки"
-                                        Binding="{Binding Setup, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}"/>
+                        </DataGridTemplateColumn.CellStyle>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Дата установки" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding Setup, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding Setup, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridComboBoxColumn Header="Статус"
                                             SelectedItemBinding="{Binding Status}" 
                                             ItemsSource="{Binding Source={StaticResource enum}}"/>

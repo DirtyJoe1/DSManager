@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,7 +26,7 @@ namespace DSManager.ViewModel
                 OnPropertyChanged(nameof(FioField));
             }
         }
-        private ObservableCollection<string> _departments = new();
+        private ObservableCollection<string> _departments = new ObservableCollection<string>(ExcelService.ReadDepartments());
         public ObservableCollection<string> Departments
         {
             get => _departments;
@@ -113,7 +114,6 @@ namespace DSManager.ViewModel
         public AddNewEntryWindowViewModel(MainWindowViewModel mainWindowViewModel)
         {
             _mainWindowViewModel = mainWindowViewModel;
-            UpdateFields();
             AddDepartmentCommand = new RelayCommand(AddDepartment);
             DeleteDepartmentCommand = new RelayCommand(DeleteDepartment);
             CreateEntryCommand = new RelayCommand(CreateEntry);
@@ -142,27 +142,26 @@ namespace DSManager.ViewModel
                 return;
             }
             ExcelService.AddDepartment(AddDepartmentField);
-            UpdateFields();
+            Departments.Add(AddDepartmentField);
+            _mainWindowViewModel.Departments.Add(AddDepartmentField);
         }
-        private void UpdateFields()
-        {
-            Departments.Clear();
-            var deps = new ObservableCollection<string>(ExcelService.ReadDepartments());
-            foreach (var department in deps)
-            {
-                Departments.Add(department);
-            }
-        }
-
         private void DeleteDepartment()
         {
             if (DeleteDepartmentField == SelectedDepartment)
             {
                 SelectedDepartment = "";
             }
-            //IndexOf full rewrite possible solution
-            ExcelService.DeleteRowFromExcelFile(Departments.IndexOf(DeleteDepartmentField), 1);
-            UpdateFields();
+            try
+            {
+                //Пофиксить этот бред
+                ExcelService.DeleteRowFromExcelFile(Departments.IndexOf(Departments.First(d => d == DeleteDepartmentField)), 1);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }   
+            Departments.Remove(DeleteDepartmentField);
+            _mainWindowViewModel.Departments.Remove(DeleteDepartmentField);
         }
     }
 }

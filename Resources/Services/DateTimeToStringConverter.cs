@@ -21,10 +21,14 @@ namespace DSManager.Resources.Services
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string dateString)
+            try
             {
-                return DateTime.Parse(dateString);
+                if (value is string dateString)
+                {
+                    return DateTime.Parse(dateString);
+                }
             }
+            catch { }
             return value;
         }
     }
