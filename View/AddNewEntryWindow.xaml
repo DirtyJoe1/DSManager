@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DSManager.View"
+        xmlns:local="clr-namespace:DSManager.View" xmlns:viewmodel="clr-namespace:DSManager.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:AddNewEntryWindowViewModel}"
         mc:Ignorable="d"
         Title="AddNewEntryWindow" Height="450" Width="800">
     <Grid Margin="20">
@@ -22,17 +22,17 @@
         </Grid.RowDefinitions>
         <Label Content="ФИО" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
         <Label Content="Отделение/Подразделение" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0"/>
-        <Label Content="Дата установки" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"/>
-        <Label Content="Дата выпуска" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0"/>
+        <Label Content="Дата выпуска" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"/>
+        <Label Content="Дата установки" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0"/>
         <Label Content="Дата окончания" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0"/>
         <Label Content="Статус" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0"/>
 
-        <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" x:Name="FioField"/>
-        <ComboBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" x:Name="DepartmentField"/>
-        <DatePicker Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" x:Name="SetupField"/>
-        <DatePicker Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" x:Name="StartField"/>
-        <DatePicker Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" x:Name="EndField"/>
-        <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding Source={StaticResource enum}}" VerticalAlignment="Center" x:Name="StatusComboBox"/>
+        <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" x:Name="FioField" Text="{Binding FioField}"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" x:Name="DepartmentField" ItemsSource="{Binding Departments}" SelectedItem="{Binding SelectedDepartment, UpdateSourceTrigger=PropertyChanged}"/>
+        <DatePicker Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" x:Name="StartField" SelectedDate="{Binding Start, UpdateSourceTrigger=PropertyChanged}"/>
+        <DatePicker Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" x:Name="SetupField" SelectedDate="{Binding Setup, UpdateSourceTrigger=PropertyChanged}"/>
+        <DatePicker Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" x:Name="EndField" SelectedDate="{Binding End, UpdateSourceTrigger=PropertyChanged}"/>
+        <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding Source={StaticResource enum}}" VerticalAlignment="Center" SelectedValue="{Binding SelectedStatus, UpdateSourceTrigger=PropertyChanged}"/>
         <Grid Grid.Row="6" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
@@ -41,19 +41,20 @@
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0">
                 <Label Content="Добавить Отделение/Подразделение" HorizontalContentAlignment="Center"/>
-                <TextBox x:Name="AddDepartmentTextBox" Height="30"/>
-                <Button x:Name="AddDepartmentButton" Content="Добавить" HorizontalAlignment="Center" Padding="20 5"/>
+                <TextBox x:Name="AddDepartmentTextBox" Height="30" Text="{Binding AddDepartmentField}"/>
+                <Button x:Name="AddDepartmentButton" Content="Добавить" HorizontalAlignment="Center" Padding="20 5" Command="{Binding AddDepartmentCommand}"/>
             </StackPanel>
             <Button x:Name="CreateEntryButton"
-                Grid.Column="1"
-                HorizontalAlignment="Center" 
-                VerticalAlignment="Center"
-                Padding="60 20"
-                Content="Создать запись"/>
+                    Grid.Column="1"
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"
+                    Padding="60 20"
+                    Content="Создать запись"
+                    Command="{Binding CreateEntryCommand}"/>
             <StackPanel Grid.Column="3">
                 <Label Content="Удалить Отделение/Подразделение" HorizontalContentAlignment="Center"/>
-                <ComboBox x:Name="RemoveDepartmentCombobox" Height="30"/>
-                <Button x:Name="RemoveDepartmentButton" Content="Удалить" HorizontalAlignment="Center" Padding="20 5"/>
+                <ComboBox x:Name="RemoveDepartmentCombobox" Height="30" ItemsSource="{Binding Departments}" SelectedItem="{Binding DeleteDepartmentField}"/>
+                <Button x:Name="RemoveDepartmentButton" Content="Удалить" HorizontalAlignment="Center" Padding="20 5" Command="{Binding DeleteDepartmentCommand}"/>
             </StackPanel>
         </Grid>
     </Grid>

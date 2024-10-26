@@ -15,8 +15,8 @@ namespace DSManager.ViewModel
     public class MainWindowViewModel : ViewModelBase
     {
         public event NotifyCollectionChangedEventHandler CollectionChanged;
-        private readonly IWindowService _windowService;
-        private ObservableCollection<DataModel> _entries;
+        public IWindowService _windowService;
+        private ObservableCollection<DataModel> _entries = new();
         public ObservableCollection<DataModel> Entries
         {
             get => _entries;
@@ -26,7 +26,17 @@ namespace DSManager.ViewModel
                 OnPropertyChanged(nameof(Entries));
             }
         }
-        private ObservableCollection<string> _departments;
+        private DataModel _selectedItem;
+        public DataModel SelectedItem
+        {
+            get => _selectedItem;
+            set
+            {
+                _selectedItem = value;
+                OnPropertyChanged(nameof(SelectedItem));
+            }
+        }
+        private ObservableCollection<string> _departments = new();
         public ObservableCollection<string> Departments
         {
             get => _departments;
@@ -40,27 +50,49 @@ namespace DSManager.ViewModel
         public ICommand OpenAddNewEntryWindowCommand { get; }
         public ICommand ExportDataCommand { get; }
         public ICommand ImportDataCommand { get; }
+        public ICommand DeleteRowCommand { get; }
 
         public MainWindowViewModel(IWindowService windowService)
         {
-            UpdateTable();
+            InitializeTable();
             _windowService = windowService;
-            OpenAddNewEntryWindowCommand = new RelayCommand(() => windowService.ShowWindow<AddNewEntryWindow>(new AddNewEntryWindowViewModel(this)));
+            OpenAddNewEntryWindowCommand = new RelayCommand(OpenAddNewEntryWindow);
             SaveDataGridCommand = new RelayCommand(SaveDataGrid);
             ImportDataCommand = new RelayCommand(ImportData);
             ExportDataCommand = new RelayCommand(ExportData);
+            DeleteRowCommand = new RelayCommand(DeleteRow);
+        }
+        private void OpenAddNewEntryWindow()
+        {
+            _windowService.ShowWindow<AddNewEntryWindow>(new AddNewEntryWindowViewModel(this));
+        }
+        private void DeleteRow()
+        {
+            if (SelectedItem != null)
+            {
+                ExcelService.DeleteRowFromExcelFile(Entries.IndexOf(SelectedItem) + 1, 0);
+                UpdateTable();
+            }
+        }
+        public void InitializeTable()
+        {
+            Departments = new ObservableCollection<string>(ExcelService.ReadDepartments());
+            Entries = new ObservableCollection<DataModel>(ExcelService.ReadExcelFile(ExcelService.ExcelFilePath));
         }
         public void UpdateTable()
         {
-            Departments = new ObservableCollection<string>(ExcelService.ReadDepartments(Repository.ExcelFilePath));
-            Entries = new ObservableCollection<DataModel>(ExcelService.ReadExcelFile(Repository.ExcelFilePath));
+            Entries.Clear();
+            var newEntries = ExcelService.ReadExcelFile(ExcelService.ExcelFilePath);
+            foreach (var item in newEntries)
+            {
+                Entries.Add(item);
+            }
         }
         public void SaveDataGrid()
         {
             try
             {
-                ExcelService.SaveDataGrid(Entries, Repository.ExcelFilePath, false);
-                UpdateTable();
+                ExcelService.SaveDataGrid(Entries, false);
                 MessageBox.Show("Успешно сохранено");
             }
             catch (Exception ex)
@@ -89,9 +121,9 @@ namespace DSManager.ViewModel
             };
             if (dialog.ShowDialog() == true)
             {
-                ExcelService.AppendDataFromExcel(dialog.FileName, Repository.ExcelFilePath);
+                ExcelService.AppendDataFromExcel(dialog.FileName, ExcelService.ExcelFilePath);
                 Entries.Clear();
-                var newEntries = ExcelService.ReadExcelFile(Repository.ExcelFilePath);
+                var newEntries = ExcelService.ReadExcelFile(ExcelService.ExcelFilePath);
                 foreach (var item in newEntries)
                 {
                     Entries.Add(item);

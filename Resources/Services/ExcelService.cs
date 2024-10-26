@@ -17,6 +17,7 @@ namespace DSManager.Resources.Services
 {
     public static class ExcelService
     {
+        public static readonly string ExcelFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Files", "data.xlsx");
         public static DataTable GetDataTableFromDataGrid<T>(IEnumerable list)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
@@ -63,34 +64,42 @@ namespace DSManager.Resources.Services
                     Id = row,
                     FIO = worksheet.Cells[row, 2].Value.ToString(),
                     Department = worksheet.Cells[row, 3].Value.ToString(),
-                    Setup = DateTime.Parse(worksheet.Cells[row, 4].Value.ToString()),
-                    Start = DateTime.Parse(worksheet.Cells[row, 5].Value.ToString()),
-                    End = DateTime.Parse(worksheet.Cells[row, 6].Value.ToString()),
+                    Start = DateTime.Parse(worksheet.Cells[row, 4].Value.ToString()),
+                    End = DateTime.Parse(worksheet.Cells[row, 5].Value.ToString()),
+                    Setup = DateTime.Parse(worksheet.Cells[row, 6].Value.ToString()),
                     Status = Enum.Parse<Statuses>(worksheet.Cells[row, 7].Value.ToString())
                 };
             }
         }
-        public static IEnumerable<string> ReadDepartments(string filePath)
+        public static IEnumerable<string> ReadDepartments()
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using var package = new ExcelPackage(filePath);
+            using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[1];
             for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
             {
                 yield return worksheet.Cells[row, 1].Value.ToString();
             }
         }
-        public static int GetEntriesCount(string filePath)
+        public static void AddDepartment(string department)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using var package = new ExcelPackage(filePath);
+            using var package = new ExcelPackage(ExcelFilePath);
+            var worksheet = package.Workbook.Worksheets[1];
+            worksheet.Cells[worksheet.Dimension.End.Row + 1, 1].Value = department;
+            package.Save();
+        }
+        public static int GetEntriesCount()
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[0];
             return worksheet.Dimension.End.Row;
         }
-        public static void SaveDataGrid(ObservableCollection<DataModel> data, string filePath, bool backup)
+        public static void SaveDataGrid(ObservableCollection<DataModel> data, bool backup)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using var package = new ExcelPackage(filePath);
+            using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = 1;
             foreach (var item in data)
@@ -106,18 +115,13 @@ namespace DSManager.Resources.Services
             }
             package.Save();
             if (backup)
-                package.SaveAs(filePath.Replace(".xlsx", "_temp.xlsx"));
+                package.SaveAs(ExcelFilePath.Replace(".xlsx", "_temp.xlsx"));
         }
         public static bool ValidateDates(DateTime? startField, DateTime? setupField, DateTime? endField)
         {
-            return (
-                startField.HasValue && !startField.Value.Equals(DateTime.MinValue) &&
-                setupField.HasValue && !setupField.Value.Equals(DateTime.MinValue) &&
-                endField.HasValue && !endField.Value.Equals(DateTime.MinValue) &&
-                (setupField.Value > startField.Value) && (setupField.Value < endField.Value) && (startField.Value < endField.Value)
-            );
+            return (setupField.Value > startField.Value) && (setupField.Value < endField.Value) && (startField.Value < endField.Value);
         }
-        public static void AddRow(string filePath, string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
+        public static void AddRow(string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
             if (string.IsNullOrEmpty(fio) || string.IsNullOrEmpty(otdel) || (status == null))
             {
@@ -129,13 +133,13 @@ namespace DSManager.Resources.Services
                 MessageBox.Show("Одно или несколько полей дат пусты или имеют невозможные значения");
                 return;
             }
-            AddData(filePath, fio, otdel, setup, start, end, status);
+            AddData(fio, otdel, setup, start, end, status);
             MessageBox.Show("Запись создана");
         }
-        public static void AddData(string filePath, string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
+        public static void AddData(string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using var package = new ExcelPackage(filePath);
+            using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[0];
             var lastrow = worksheet.Dimension.Rows + 1;
             worksheet.Cells[lastrow, 1].Value = lastrow;
@@ -147,11 +151,11 @@ namespace DSManager.Resources.Services
             worksheet.Cells[lastrow, 7].Value = status.ToString();
             package.Save();
         }
-        public static void DeleteRowFromExcelFile(string filePath, int rowIndex)
+        public static void DeleteRowFromExcelFile(int rowIndex, int windex)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using var package = new ExcelPackage(filePath);
-            var worksheet = package.Workbook.Worksheets[0];
+            using var package = new ExcelPackage(ExcelFilePath);
+            var worksheet = package.Workbook.Worksheets[windex];
             worksheet.DeleteRow(rowIndex);
             package.Save();
         }
@@ -170,9 +174,9 @@ namespace DSManager.Resources.Services
                 targetWorksheet.Cells[maxRows + i, 1].Value = maxRows + i;
                 targetWorksheet.Cells[maxRows + i, 2].Value = rowData.FIO;
                 targetWorksheet.Cells[maxRows + i, 3].Value = rowData.Department;
-                targetWorksheet.Cells[maxRows + i, 4].Value = rowData.Setup.ToString();
-                targetWorksheet.Cells[maxRows + i, 5].Value = rowData.Start.ToString();
-                targetWorksheet.Cells[maxRows + i, 6].Value = rowData.End.ToString();
+                targetWorksheet.Cells[maxRows + i, 4].Value = rowData.Start.ToString();
+                targetWorksheet.Cells[maxRows + i, 5].Value = rowData.End.ToString();
+                targetWorksheet.Cells[maxRows + i, 6].Value = rowData.Setup.ToString();
                 targetWorksheet.Cells[maxRows + i, 7].Value = rowData.Status.ToString();
             }
             targetPackage.Save();
@@ -180,7 +184,8 @@ namespace DSManager.Resources.Services
         }
         public static void ExportFile(string path)
         {
-            File.Copy(Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Files", "data.xlsx"), Path.Combine(path, "export.xlsx"), true);
+            File.Copy(ExcelFilePath, Path.Combine(path, "export.xlsx"), true);
         }
+
     }
 }
