@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace DSManager.ViewModel
 {
@@ -111,6 +112,7 @@ namespace DSManager.ViewModel
         public ICommand DeleteDepartmentCommand { get; }
         public ICommand CreateEntryCommand { get; }
         private MainWindowViewModel _mainWindowViewModel;
+        public event Action<DataModel> EntryCreated;
         public AddNewEntryWindowViewModel(MainWindowViewModel mainWindowViewModel)
         {
             _mainWindowViewModel = mainWindowViewModel;
@@ -121,8 +123,7 @@ namespace DSManager.ViewModel
 
         private void CreateEntry()
         {
-            ExcelService.AddRow(FioField, SelectedDepartment, Setup, Start, End, SelectedStatus);
-            _mainWindowViewModel.Entries.Add(new DataModel
+            var newEntry = new DataModel
             {
                 Id = _mainWindowViewModel.Entries.Count + 1,
                 FIO = FioField,
@@ -131,7 +132,11 @@ namespace DSManager.ViewModel
                 Start = Start,
                 End = End,
                 Status = (Statuses)Enum.Parse(typeof(Statuses), SelectedStatus)
-            });
+            };
+            HistoryManager.Execute(new AddAction(newEntry, _mainWindowViewModel.Entries));
+            EntryCreated?.Invoke(newEntry);
+            //Переделать в иконку
+            MessageBox.Show("Запись создана");
         }
 
         private void AddDepartment()
@@ -151,17 +156,28 @@ namespace DSManager.ViewModel
             {
                 SelectedDepartment = "";
             }
+            if (string.IsNullOrEmpty(DeleteDepartmentField))
+            {
+                MessageBox.Show("Выберите отделение/подразделение для удаления");
+                return;
+            }
             try
             {
-                //Пофиксить этот бред
-                ExcelService.DeleteRowFromExcelFile(Departments.IndexOf(Departments.First(d => d == DeleteDepartmentField)), 1);
+                var indexInExcel = Departments.IndexOf(DeleteDepartmentField);
+                if (indexInExcel == -1)
+                {
+                    MessageBox.Show("Отделение/подразделение не найдено");
+                    return;
+                }
+                ExcelService.DeleteRowFromExcelFile(indexInExcel + 1, 1);
+                Departments.Remove(DeleteDepartmentField);
+                _mainWindowViewModel.Departments.Remove(DeleteDepartmentField);
+                _mainWindowViewModel.RefreshDepartments();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show($"Ошибка при удалении отделения/подразделения: {ex.Message}");
             }   
-            Departments.Remove(DeleteDepartmentField);
-            _mainWindowViewModel.Departments.Remove(DeleteDepartmentField);
         }
     }
 }

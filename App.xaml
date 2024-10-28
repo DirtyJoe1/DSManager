@@ -11,6 +11,7 @@
         <ResourceDictionary>
             <Services:DateBackgroundColorConverter x:Key="DateBackgroundColorConverter"/>
             <Services:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
+            <Services:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
             <ObjectDataProvider x:Key="enum" MethodName="GetValues" ObjectType="{x:Type core:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type Type="model:Statuses"/>
@@ -19,8 +20,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
                 <materialDesign:CustomColorTheme BaseTheme="Dark" 
-                                   PrimaryColor="#4d2569" 
-                                   SecondaryColor="#3a1952" />
+                                   PrimaryColor="#FFFFFFFF" 
+                                   SecondaryColor="#FF89878A" />
             <ResourceDictionary Source="Resources/Style/Style.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

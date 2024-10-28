@@ -40,8 +40,8 @@ namespace DSManager.Model
                 OnPropertyChanged(nameof(Department));
             }
         }
-        private DateTime _setup;
-        public DateTime Setup
+        private DateTime? _setup;
+        public DateTime? Setup
         {
             get => _setup;
             set
@@ -50,8 +50,8 @@ namespace DSManager.Model
                 OnPropertyChanged(nameof(Setup));
             }
         }
-        private DateTime _start;
-        public DateTime Start
+        private DateTime? _start;
+        public DateTime? Start
         {
             get => _start;
             set
@@ -60,8 +60,8 @@ namespace DSManager.Model
                 OnPropertyChanged(nameof(Start));
             }
         }
-        private DateTime _end;
-        public DateTime End
+        private DateTime? _end;
+        public DateTime? End
         {
             get => _end;
             set

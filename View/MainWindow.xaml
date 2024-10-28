@@ -4,9 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DSManager"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:viewmodel="clr-namespace:DSManager.ViewModel" d:DataContext="{d:DesignInstance Type=viewmodel:MainWindowViewModel}"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewmodel="clr-namespace:DSManager.ViewModel"
+        xmlns:componentmodel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:s="clr-namespace:System;assembly=mscorlib"
+        d:DataContext="{d:DesignInstance Type=viewmodel:MainWindowViewModel}"
         mc:Ignorable="d"
         Title="BDSM" Height="600" Width="1200">
+    <Window.Resources>
+        <CollectionViewSource x:Key="Departments"
+                              Source="{Binding Departments, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+    </Window.Resources>
     <Grid Background="{DynamicResource BackgroundColor}">
         <Grid>
             <Grid.RowDefinitions>
@@ -14,6 +22,18 @@
                 <RowDefinition Height="6*"/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="10" Orientation="Horizontal">
+                <Button VerticalAlignment="Center"
+                        Style="{DynamicResource BaseButtonStyle}"
+                        Command="{Binding UndoCommand}"
+                        Content="{materialDesign:PackIcon Kind=Undo,Size=40}"
+                        IsEnabled="{Binding IsUndoEnabled}"
+                        Opacity="{Binding IsUndoEnabled, Converter={StaticResource BoolToOpacityConverter}}"/>
+                <Button VerticalAlignment="Center"
+                        Style="{DynamicResource BaseButtonStyle}"
+                        Command="{Binding RedoCommand}"
+                        Content="{materialDesign:PackIcon Kind=Redo,Size=40}"
+                        IsEnabled="{Binding IsRedoEnabled}"
+                        Opacity="{Binding IsRedoEnabled, Converter={StaticResource BoolToOpacityConverter}}" Cursor="Hand"/>
                 <Button VerticalAlignment="Center"
                         Style="{DynamicResource BaseButtonStyle}"
                         Command="{Binding SaveDataGridCommand}"
@@ -30,6 +50,34 @@
                         Style="{DynamicResource BaseButtonStyle}"
                         Command="{Binding ImportDataCommand}"
                         Content="{materialDesign:PackIcon Kind=Import,Size=40}"/>
+                <StackPanel Orientation="Horizontal" Width="300">
+                    <Button VerticalAlignment="Center"
+                            Style="{DynamicResource BaseButtonStyle}"
+                            Content="{materialDesign:PackIcon Kind=Filter,Size=40}"
+                            Command="{Binding FilterCommand}"/>
+                    <DatePicker Foreground="White"
+                                VerticalContentAlignment="Bottom"
+                                VerticalAlignment="Bottom"
+                                Visibility="{Binding DatePickerVisibility}"/>
+                    <DatePicker Foreground="White"
+                                VerticalContentAlignment="Bottom"
+                                VerticalAlignment="Bottom"
+                                Visibility="{Binding DatePickerVisibility}"/>
+                    <TextBox Visibility="{Binding FIOFilterVisibility}"
+                             Width="160"
+                             Foreground="White"
+                             VerticalAlignment="Bottom"
+                             materialDesign:HintAssist.Hint="Введите ФИО"
+                             HorizontalContentAlignment="Center"
+                             VerticalContentAlignment="Bottom"
+                             Style="{DynamicResource MaterialDesignFloatingHintTextBox}"/>
+                    <ComboBox Visibility="{Binding DepartmentsFilterVisibility}"
+                              ItemsSource="{Binding Source={StaticResource Departments}}"
+                              Foreground="White"
+                              Width="160"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Bottom"/>
+                </StackPanel>
             </StackPanel>
             <DataGrid x:Name="Table" Grid.Row="1" 
                       AutoGenerateColumns="False" 
@@ -44,10 +92,10 @@
                       SelectedItem="{Binding SelectedItem}"
                       ItemsSource="{Binding Entries, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                       BorderBrush="Gray"
-                      BorderThickness="1">
+                      BorderThickness="1"
+                      Sorting="Table_Sorting">
                 <DataGrid.Resources>
-                    <CollectionViewSource x:Key="Departments"
-                                          Source="{Binding Departments}"/>
+
                 </DataGrid.Resources>
                 <DataGrid.ContextMenu>
                     <ContextMenu>
@@ -64,7 +112,7 @@
                     <DataGridComboBoxColumn Header="Отделение/Подразделение" 
                                             SelectedItemBinding="{Binding Department}" 
                                             ItemsSource="{Binding Source={StaticResource Departments}, UpdateSourceTrigger=PropertyChanged}"/>
-                    <DataGridTemplateColumn Header="Дата выпуска" Width="120">
+                    <DataGridTemplateColumn Header="Дата выпуска" Width="120" SortMemberPath="Start">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <DatePicker SelectedDate="{Binding Start, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center" />
@@ -76,7 +124,7 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Дата окончания" Width="120">
+                    <DataGridTemplateColumn Header="Дата окончания" Width="120" SortMemberPath="End">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <DatePicker SelectedDate="{Binding End, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center"/>
@@ -94,7 +142,7 @@
                             </Style>
                         </DataGridTemplateColumn.CellStyle>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Дата установки" Width="120">
+                    <DataGridTemplateColumn Header="Дата установки" Width="120" SortMemberPath="Setup">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <DatePicker SelectedDate="{Binding Setup, Converter={StaticResource DateTimeToStringConverter}, UpdateSourceTrigger=PropertyChanged, ConverterCulture=ru-RU}" HorizontalContentAlignment="Center"/>

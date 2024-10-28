@@ -14,6 +14,7 @@ namespace DSManager.ViewModel
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        #region Fields
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public IWindowService _windowService;
         private ObservableCollection<DataModel> _entries = new();
@@ -46,46 +47,95 @@ namespace DSManager.ViewModel
                 OnPropertyChanged(nameof(Departments));
             }
         }
+        private Visibility datePickerVisibility = Visibility.Visible;
+        public Visibility DatePickerVisibility { get => datePickerVisibility; set => Set(ref datePickerVisibility, value); }
+        private Visibility fIOFilterVisibility = Visibility.Collapsed;
+        public Visibility FIOFilterVisibility { get => fIOFilterVisibility; set => Set(ref fIOFilterVisibility, value); }
+        private Visibility departmentsFilterVisibility = Visibility.Collapsed;
+        public Visibility DepartmentsFilterVisibility { get => departmentsFilterVisibility; set => Set(ref departmentsFilterVisibility, value); }
+        private bool isUndoEnabled = false;
+        public bool IsUndoEnabled { get => isUndoEnabled; set => Set(ref isUndoEnabled, value); }
+        private bool isRedoEnabled = false;
+        public bool IsRedoEnabled { get => isRedoEnabled; set => Set(ref isRedoEnabled, value); }
+        #endregion
+        #region Commands
         public ICommand SaveDataGridCommand { get; }
         public ICommand OpenAddNewEntryWindowCommand { get; }
         public ICommand ExportDataCommand { get; }
         public ICommand ImportDataCommand { get; }
         public ICommand DeleteRowCommand { get; }
+        public ICommand UndoCommand { get; }
+        public ICommand RedoCommand { get; }
+        public ICommand FilterCommand {  get; }
+        #endregion
 
         public MainWindowViewModel(IWindowService windowService)
         {
-            InitializeTable();
+            Application.Current.Dispatcher.Invoke(async () => await InitializeTable());
             _windowService = windowService;
             OpenAddNewEntryWindowCommand = new RelayCommand(OpenAddNewEntryWindow);
+            var addNewEntryVM = new AddNewEntryWindowViewModel(this);
+            HistoryManager.UndoRedoStateChanged += UpdateUndoRedoState;
+            UpdateUndoRedoState();
+            addNewEntryVM.EntryCreated += newEntry =>
+            {
+                Entries.Add(newEntry);
+            };
             SaveDataGridCommand = new RelayCommand(SaveDataGrid);
             ImportDataCommand = new RelayCommand(ImportData);
             ExportDataCommand = new RelayCommand(ExportData);
             DeleteRowCommand = new RelayCommand(DeleteRow);
+            UndoCommand = new RelayCommand(HistoryManager.Undo);
+            RedoCommand = new RelayCommand(HistoryManager.Redo);
+            FilterCommand = new RelayCommand(Filter);
         }
         private void OpenAddNewEntryWindow()
         {
             _windowService.ShowWindow<AddNewEntryWindow>(new AddNewEntryWindowViewModel(this));
         }
-        private void DeleteRow()
-        {
-            if (SelectedItem != null)
-            {
-                ExcelService.DeleteRowFromExcelFile(Entries.IndexOf(SelectedItem) + 1, 0);
-                UpdateTable();
-            }
-        }
-        public void InitializeTable()
+
+        public async Task InitializeTable()
         {
             Departments = new ObservableCollection<string>(ExcelService.ReadDepartments());
-            Entries = new ObservableCollection<DataModel>(ExcelService.ReadExcelFile(ExcelService.ExcelFilePath));
-        }
-        public void UpdateTable()
-        {
-            Entries.Clear();
-            var newEntries = ExcelService.ReadExcelFile(ExcelService.ExcelFilePath);
-            foreach (var item in newEntries)
+            await foreach (var entry in ExcelService.ReadExcelFile(ExcelService.ExcelFilePath))
             {
-                Entries.Add(item);
+                Entries.Add(entry);
+            }
+        }
+        public async Task RefreshTable()
+        {
+            var newEntries = await Task.Run(() => ExcelService.ReadExcelFile(ExcelService.ExcelFilePath));
+            await CollectionService.ReplaceItemsInCollectionAsync(Entries, newEntries);
+        }
+        public void RefreshDepartments()
+        {
+            var newDepartments = ExcelService.ReadDepartments();
+            CollectionService.ReplaceItemsInCollection(Departments, newDepartments);
+        }
+        public void ExportData()
+        {
+            var dialog = new VistaFolderBrowserDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                string selectedPath = dialog.SelectedPath;
+                if (selectedPath != null)
+                {
+                    ExcelService.ExportFile(selectedPath);
+                }
+            }
+        }
+        public async void ImportData()
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = "Выберите файл для импорта данных",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                await ExcelService.AppendDataFromExcel(dialog.FileName, ExcelService.ExcelFilePath);
+                var newEntries = await Task.Run(() => ExcelService.ReadExcelFile(ExcelService.ExcelFilePath));
+                await CollectionService.ReplaceItemsInCollectionAsync(Entries, newEntries);
             }
         }
         public void SaveDataGrid()
@@ -100,35 +150,36 @@ namespace DSManager.ViewModel
                 MessageBox.Show(ex.Message);
             }
         }
-        public void ExportData()
+        public async void DeleteRow()
         {
-            var dialog = new VistaFolderBrowserDialog();
-            if (dialog.ShowDialog() == true)
+            if (SelectedItem != null)
             {
-                string selectedPath = dialog.SelectedPath;
-                if (selectedPath != null)
-                {
-                    ExcelService.ExportFile(selectedPath);
-                }
+                ExcelService.DeleteRowFromExcelFile(Entries.IndexOf(SelectedItem) + 1, 0);
+                await RefreshTable();
             }
         }
-        public void ImportData()
+        public void Filter()
         {
-            var dialog = new OpenFileDialog
+            if(DatePickerVisibility == Visibility.Visible)
             {
-                Title = "Выберите файл для импорта данных",
-                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                ExcelService.AppendDataFromExcel(dialog.FileName, ExcelService.ExcelFilePath);
-                Entries.Clear();
-                var newEntries = ExcelService.ReadExcelFile(ExcelService.ExcelFilePath);
-                foreach (var item in newEntries)
-                {
-                    Entries.Add(item);
-                }
+                DatePickerVisibility = Visibility.Collapsed;
+                FIOFilterVisibility = Visibility.Visible;
             }
+            else if (FIOFilterVisibility == Visibility.Visible)
+            {
+                FIOFilterVisibility = Visibility.Collapsed;
+                DepartmentsFilterVisibility = Visibility.Visible;
+            }
+            else
+            {
+                DepartmentsFilterVisibility= Visibility.Collapsed;
+                DatePickerVisibility= Visibility.Visible;
+            }
+        }
+        private void UpdateUndoRedoState()
+        {
+            IsUndoEnabled = HistoryManager.CanUndo;
+            IsRedoEnabled = HistoryManager.CanRedo;
         }
     }
 }

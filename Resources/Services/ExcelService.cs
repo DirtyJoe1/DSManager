@@ -52,13 +52,14 @@ namespace DSManager.Resources.Services
 
             return table;
         }
-        public static IEnumerable<DataModel> ReadExcelFile(string filePath)
+        public static async IAsyncEnumerable<DataModel> ReadExcelFile(string filePath)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(filePath);
             var worksheet = package.Workbook.Worksheets[0];
             for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
             {
+                await Task.Yield();
                 yield return new DataModel
                 {
                     Id = row,
@@ -117,10 +118,6 @@ namespace DSManager.Resources.Services
             if (backup)
                 package.SaveAs(ExcelFilePath.Replace(".xlsx", "_temp.xlsx"));
         }
-        public static bool ValidateDates(DateTime? startField, DateTime? setupField, DateTime? endField)
-        {
-            return (setupField.Value > startField.Value) && (setupField.Value < endField.Value) && (startField.Value < endField.Value);
-        }
         public static void AddRow(string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
             if (string.IsNullOrEmpty(fio) || string.IsNullOrEmpty(otdel) || (status == null))
@@ -128,13 +125,12 @@ namespace DSManager.Resources.Services
                 MessageBox.Show("ФИО, Отделение/Подразделение и/или Cтатус пусты!");
                 return;
             }
-            if (!ValidateDates(start, setup, end))
+            if (start == null || setup == null || end == null || setup <= start || setup >= end)
             {
                 MessageBox.Show("Одно или несколько полей дат пусты или имеют невозможные значения");
                 return;
             }
             AddData(fio, otdel, setup, start, end, status);
-            MessageBox.Show("Запись создана");
         }
         public static void AddData(string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
@@ -149,6 +145,7 @@ namespace DSManager.Resources.Services
             worksheet.Cells[lastrow, 5].Value = $"{end:dd.MM.yyyy}";
             worksheet.Cells[lastrow, 6].Value = $"{setup:dd.MM.yyyy}";
             worksheet.Cells[lastrow, 7].Value = status.ToString();
+
             package.Save();
         }
         public static void DeleteRowFromExcelFile(int rowIndex, int windex)
@@ -159,14 +156,14 @@ namespace DSManager.Resources.Services
             worksheet.DeleteRow(rowIndex);
             package.Save();
         }
-        public static void AppendDataFromExcel(string sourceFilePath, string targetFilePath)
+        public static async Task AppendDataFromExcel(string sourceFilePath, string targetFilePath)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var sourcePackage = new ExcelPackage(sourceFilePath);
             using var targetPackage = new ExcelPackage(targetFilePath);
             var sourceWorksheet = sourcePackage.Workbook.Worksheets[0];
             var targetWorksheet = targetPackage.Workbook.Worksheets[0];
-            var sourceData = ReadExcelFile(sourceFilePath).ToList();
+            var sourceData = await ReadExcelFile(sourceFilePath).ToListAsync();
             int maxRows = targetWorksheet.Dimension.End.Row;
             for (int i = 1; i <= sourceData.Count; i++)
             {
@@ -179,13 +176,12 @@ namespace DSManager.Resources.Services
                 targetWorksheet.Cells[maxRows + i, 6].Value = rowData.Setup.ToString();
                 targetWorksheet.Cells[maxRows + i, 7].Value = rowData.Status.ToString();
             }
-            targetPackage.Save();
+            await targetPackage.SaveAsync();
             sourcePackage.Dispose();
         }
         public static void ExportFile(string path)
         {
             File.Copy(ExcelFilePath, Path.Combine(path, "export.xlsx"), true);
         }
-
     }
 }
