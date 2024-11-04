@@ -123,6 +123,8 @@ namespace DSManager.ViewModel
 
         private void CreateEntry()
         {
+            //Пофиксить создание, если запись в файл не успешна
+            //Проверку на налучие такого же пользователя
             var newEntry = new DataModel
             {
                 Id = _mainWindowViewModel.Entries.Count + 1,
@@ -135,7 +137,6 @@ namespace DSManager.ViewModel
             };
             HistoryManager.Execute(new AddAction(newEntry, _mainWindowViewModel.Entries));
             EntryCreated?.Invoke(newEntry);
-            //Переделать в иконку
             MessageBox.Show("Запись создана");
         }
 

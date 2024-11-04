@@ -1,17 +1,11 @@
 ﻿using DSManager.Model;
 using OfficeOpenXml;
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using static MaterialDesignThemes.Wpf.Theme.ToolBar;
 
 namespace DSManager.Resources.Services
 {
@@ -60,15 +54,38 @@ namespace DSManager.Resources.Services
             for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
             {
                 await Task.Yield();
+                string endValue = worksheet.Cells[row, 5].Value?.ToString();
+                DateTime? endDate = DateTime.TryParse(endValue, out DateTime parsedEndDate) ? parsedEndDate : null;
+                string startValue = worksheet.Cells[row, 4].Value?.ToString();
+                DateTime? startDate = DateTime.TryParse(startValue, out DateTime parsedStartDate) ? parsedStartDate : null;
+                string setupValue = worksheet.Cells[row, 6].Value?.ToString();
+                DateTime? setupDate = DateTime.TryParse(setupValue, out DateTime parsedSetupDate) ? parsedSetupDate : null;
+                Statuses status;
+                if (endDate.HasValue && endDate <= DateTime.Now)
+                {
+                    status = Statuses.Закончился;//Если получили null или дата прошла при чтении даты окончания, то считаем, что статус Закончился
+                }
+                else
+                {
+                    if (Enum.TryParse<Statuses>(worksheet.Cells[row, 7].Value?.ToString(), out var parsedStatus))
+                    {
+                        status = parsedStatus;
+                    }
+                    else
+                    {
+                        status = Statuses.Подан; //Если получили null при чтении статуса, то считаем, что статус Подан
+                    }
+                }
+
                 yield return new DataModel
                 {
                     Id = row,
-                    FIO = worksheet.Cells[row, 2].Value.ToString(),
-                    Department = worksheet.Cells[row, 3].Value.ToString(),
-                    Start = DateTime.Parse(worksheet.Cells[row, 4].Value.ToString()),
-                    End = DateTime.Parse(worksheet.Cells[row, 5].Value.ToString()),
-                    Setup = DateTime.Parse(worksheet.Cells[row, 6].Value.ToString()),
-                    Status = Enum.Parse<Statuses>(worksheet.Cells[row, 7].Value.ToString())
+                    FIO = worksheet.Cells[row, 2].Value?.ToString(),
+                    Department = worksheet.Cells[row, 3].Value?.ToString(),
+                    Start = startDate,
+                    End = endDate,
+                    Setup = setupDate,
+                    Status = status
                 };
             }
         }
@@ -90,7 +107,7 @@ namespace DSManager.Resources.Services
             worksheet.Cells[worksheet.Dimension.End.Row + 1, 1].Value = department;
             package.Save();
         }
-        public static int GetEntriesCount()
+        public static int GetRowCount()//Думал, что может где-то пригодится, пусть будет
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(ExcelFilePath);
@@ -145,6 +162,21 @@ namespace DSManager.Resources.Services
             worksheet.Cells[lastrow, 5].Value = $"{end:dd.MM.yyyy}";
             worksheet.Cells[lastrow, 6].Value = $"{setup:dd.MM.yyyy}";
             worksheet.Cells[lastrow, 7].Value = status.ToString();
+            package.Save();
+        }
+        public static void InsertRow(int rowIndex, string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using var package = new ExcelPackage(ExcelFilePath);
+            var worksheet = package.Workbook.Worksheets[0];
+            worksheet.InsertRow(rowIndex + 1, 1);
+            worksheet.Cells[rowIndex + 1, 1].Value = rowIndex;
+            worksheet.Cells[rowIndex + 1, 2].Value = fio;
+            worksheet.Cells[rowIndex + 1, 3].Value = otdel;
+            worksheet.Cells[rowIndex + 1, 4].Value = $"{start:dd.MM.yyyy}";
+            worksheet.Cells[rowIndex + 1, 5].Value = $"{end:dd.MM.yyyy}";
+            worksheet.Cells[rowIndex + 1, 6].Value = $"{setup:dd.MM.yyyy}";
+            worksheet.Cells[rowIndex + 1, 7].Value = status.ToString();
 
             package.Save();
         }

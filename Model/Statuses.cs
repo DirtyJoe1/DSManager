@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace DSManager.Model
 {
-    public enum Statuses { Подан, Получен, Активен, Закончился }; // По достижении оканчания срока
+    public enum Statuses { Подан, Получен, Активен, Закончился };
 }

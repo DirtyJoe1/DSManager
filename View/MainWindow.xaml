@@ -84,6 +84,8 @@
                       GridLinesVisibility="Horizontal"
                       EnableColumnVirtualization="True" 
                       EnableRowVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
                       CanUserDeleteRows="False"
                       CanUserAddRows="False"
                       CanUserReorderColumns="True"
@@ -95,7 +97,6 @@
                       BorderThickness="1"
                       Sorting="Table_Sorting">
                 <DataGrid.Resources>
-
                 </DataGrid.Resources>
                 <DataGrid.ContextMenu>
                     <ContextMenu>
@@ -156,7 +157,8 @@
                     </DataGridTemplateColumn>
                     <DataGridComboBoxColumn Header="Статус"
                                             SelectedItemBinding="{Binding Status}" 
-                                            ItemsSource="{Binding Source={StaticResource enum}}"/>
+                                            ItemsSource="{Binding Source={StaticResource enum}}"
+                                            />
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>

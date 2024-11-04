@@ -27,12 +27,12 @@ namespace DSManager
             WindowService windowService = new();
             DataContext = new MainWindowViewModel(windowService);
         }
+        //Пофиксить утечку памяти
         private async void Table_Sorting(object sender, DataGridSortingEventArgs e)
         {
             e.Handled = true;
             string propertyName = e.Column.SortMemberPath;
             var view = CollectionViewSource.GetDefaultView(Table.ItemsSource);
-
             if (view == null)
                 return;
             ListSortDirection direction = e.Column.SortDirection == ListSortDirection.Ascending
@@ -50,7 +50,6 @@ namespace DSManager
                         ? data.OrderBy(x => x.GetType().GetProperty(propertyName).GetValue(x)).ToList()
                         : data.OrderByDescending(x => x.GetType().GetProperty(propertyName).GetValue(x)).ToList();
                 });
-
                 Table.ItemsSource = new ObservableCollection<DataModel>(sortedData);
             }
         }

@@ -7,7 +7,6 @@ using Ookii.Dialogs.Wpf;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Input;
 
 namespace DSManager.ViewModel
@@ -17,6 +16,7 @@ namespace DSManager.ViewModel
         #region Fields
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public IWindowService _windowService;
+
         private ObservableCollection<DataModel> _entries = new();
         public ObservableCollection<DataModel> Entries
         {
@@ -150,11 +150,23 @@ namespace DSManager.ViewModel
                 MessageBox.Show(ex.Message);
             }
         }
+        //Пофиксить этот бред
         public async void DeleteRow()
         {
             if (SelectedItem != null)
             {
-                ExcelService.DeleteRowFromExcelFile(Entries.IndexOf(SelectedItem) + 1, 0);
+                var newEntry = new DataModel
+                {
+                    Id = SelectedItem.Id,
+                    FIO = SelectedItem.FIO,
+                    Department = SelectedItem.Department,
+                    Setup = SelectedItem.Setup,
+                    Start = SelectedItem.Start,
+                    End = SelectedItem.End,
+                    Status = SelectedItem.Status
+                };
+                HistoryManager.Execute(new DeleteAction(newEntry, Entries));
+                ExcelService.DeleteRowFromExcelFile(SelectedItem.Id, 0);
                 await RefreshTable();
             }
         }

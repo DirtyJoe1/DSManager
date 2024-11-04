@@ -26,13 +26,38 @@
         <Label Content="Дата установки" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0"/>
         <Label Content="Дата окончания" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0"/>
         <Label Content="Статус" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0"/>
-
-        <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" x:Name="FioField" Text="{Binding FioField}"/>
-        <ComboBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" x:Name="DepartmentField" ItemsSource="{Binding Departments}" SelectedItem="{Binding SelectedDepartment, UpdateSourceTrigger=PropertyChanged}"/>
-        <DatePicker Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" x:Name="StartField" SelectedDate="{Binding Start, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
-        <DatePicker Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" x:Name="SetupField" SelectedDate="{Binding Setup, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
-        <DatePicker Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" x:Name="EndField" SelectedDate="{Binding End, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
-        <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding Source={StaticResource enum}}" VerticalAlignment="Center" SelectedValue="{Binding SelectedStatus, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Grid.Row="0"
+                 Grid.Column="1"
+                 VerticalAlignment="Center"
+                 Text="{Binding FioField}"
+                 Foreground="White"/>
+        <ComboBox Grid.Row="1"
+                  Grid.Column="1"
+                  VerticalAlignment="Center"
+                  ItemsSource="{Binding Departments}"
+                  SelectedItem="{Binding SelectedDepartment, UpdateSourceTrigger=PropertyChanged}"
+                  Foreground="White"/>
+        <DatePicker Grid.Row="2"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    SelectedDate="{Binding Start, UpdateSourceTrigger=PropertyChanged}"
+                    Foreground="White"/>
+        <DatePicker Grid.Row="3"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    SelectedDate="{Binding Setup, UpdateSourceTrigger=PropertyChanged}"
+                    Foreground="White"/>
+        <DatePicker Grid.Row="4"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    SelectedDate="{Binding End, UpdateSourceTrigger=PropertyChanged}"
+                    Foreground="White"/>
+        <ComboBox Grid.Row="5"
+                  Grid.Column="1"
+                  ItemsSource="{Binding Source={StaticResource enum}}"
+                  VerticalAlignment="Center"
+                  SelectedValue="{Binding SelectedStatus, UpdateSourceTrigger=PropertyChanged}"
+                  Foreground="White"/>
         <Grid Grid.Row="6" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
@@ -42,9 +67,9 @@
             <StackPanel Grid.Column="0">
                 <Label Content="Добавить Отделение/Подразделение"
                        HorizontalContentAlignment="Center"/>
-                <TextBox x:Name="AddDepartmentTextBox"
-                         Height="30" 
-                         Text="{Binding AddDepartmentField}"/>
+                <TextBox Height="30" 
+                         Text="{Binding AddDepartmentField}"
+                         Foreground="White"/>
                 <Button Style="{DynamicResource AddNewEntryWindowButtonStyle}"
                         Content="Добавить" 
                         HorizontalAlignment="Center"
@@ -60,10 +85,10 @@
             <StackPanel Grid.Column="3">
                 <Label Content="Удалить Отделение/Подразделение"
                        HorizontalContentAlignment="Center"/>
-                <ComboBox x:Name="RemoveDepartmentCombobox" 
-                          Height="30" 
+                <ComboBox Height="30" 
                           ItemsSource="{Binding Departments}"
-                          SelectedItem="{Binding DeleteDepartmentField}"/>
+                          SelectedItem="{Binding DeleteDepartmentField}"
+                          Foreground="White"/>
                 <Button Style="{DynamicResource AddNewEntryWindowButtonStyle}"
                         Content="Удалить"
                         HorizontalAlignment="Center"

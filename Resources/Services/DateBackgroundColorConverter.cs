@@ -13,17 +13,20 @@ namespace DSManager.Resources.Services
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            DateTime endDate = (DateTime)value;
+            if (value == null || value is not DateTime endDate)
+            {
+                return new SolidColorBrush(Colors.Transparent);
+            }
             DateTime now = DateTime.Now;
             TimeSpan diff = endDate - now;
             if (diff.TotalDays <= 7)
-                return new SolidColorBrush(Color.FromArgb(96, 255, 0, 0));
-            else if(diff.TotalDays > 7 && diff.TotalDays <= 30)
-                return new SolidColorBrush(Color.FromArgb(96, 0, 0, 255));
-            else if (diff.TotalDays > 30 && diff.TotalDays <= 180)
-                return new SolidColorBrush(Color.FromArgb(96, 255, 255, 0));
+                return new SolidColorBrush(Color.FromArgb(150, 255, 0, 0));
+            else if(diff.TotalDays > 7 && diff.TotalDays <= 14)
+                return new SolidColorBrush(Color.FromArgb(150, 255, 165, 0));
+            else if (diff.TotalDays > 14 && diff.TotalDays <= 30)
+                return new SolidColorBrush(Color.FromArgb(150, 255, 255, 0));
             else
-                return new SolidColorBrush(Color.FromArgb(96, 0, 255, 0));
+                return new SolidColorBrush(Color.FromArgb(150, 0, 255, 0));
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
