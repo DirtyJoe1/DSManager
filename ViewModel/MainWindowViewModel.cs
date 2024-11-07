@@ -6,6 +6,7 @@ using Microsoft.Win32;
 using Ookii.Dialogs.Wpf;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -27,14 +28,14 @@ namespace DSManager.ViewModel
                 OnPropertyChanged(nameof(Entries));
             }
         }
-        private DataModel _selectedItem;
-        public DataModel SelectedItem
+        private ObservableCollection<DataModel> _entriesTemp = new();
+        public ObservableCollection<DataModel> EntriesTemp
         {
-            get => _selectedItem;
+            get => _entriesTemp;
             set
             {
-                _selectedItem = value;
-                OnPropertyChanged(nameof(SelectedItem));
+                _entries = value;
+                OnPropertyChanged(nameof(EntriesTemp));
             }
         }
         private ObservableCollection<string> _departments = new();
@@ -47,16 +48,66 @@ namespace DSManager.ViewModel
                 OnPropertyChanged(nameof(Departments));
             }
         }
+        private DataModel _selectedItem;
+        public DataModel SelectedItem { get => _selectedItem; set =>  Set(ref _selectedItem, value); }
         private Visibility datePickerVisibility = Visibility.Visible;
         public Visibility DatePickerVisibility { get => datePickerVisibility; set => Set(ref datePickerVisibility, value); }
         private Visibility fIOFilterVisibility = Visibility.Collapsed;
         public Visibility FIOFilterVisibility { get => fIOFilterVisibility; set => Set(ref fIOFilterVisibility, value); }
         private Visibility departmentsFilterVisibility = Visibility.Collapsed;
-        public Visibility DepartmentsFilterVisibility { get => departmentsFilterVisibility; set => Set(ref departmentsFilterVisibility, value); }
+        public Visibility DepartmentsFilterVisibility
+        {
+            get => departmentsFilterVisibility; set => Set(ref departmentsFilterVisibility, value);
+        }
         private bool isUndoEnabled = false;
         public bool IsUndoEnabled { get => isUndoEnabled; set => Set(ref isUndoEnabled, value); }
         private bool isRedoEnabled = false;
         public bool IsRedoEnabled { get => isRedoEnabled; set => Set(ref isRedoEnabled, value); }
+        private string fioFilter;
+        public string FioFilter
+        {
+            get => fioFilter;
+            set 
+            {
+                fioFilter = value;
+                OnPropertyChanged(nameof(FioFilter));
+                FioFiltration();
+            } 
+        }
+        private DateTime? _startDateFilter;
+        public DateTime? StartDateFilter
+        {
+            get => _startDateFilter;
+            set
+            {
+                _startDateFilter = value;
+                OnPropertyChanged(nameof(StartDateFilter));
+                DateFiltration();
+            }
+        }
+
+        private DateTime? _endDateFilter;
+        public DateTime? EndDateFilter
+        {
+            get => _endDateFilter;
+            set
+            {
+                _endDateFilter = value;
+                OnPropertyChanged(nameof(EndDateFilter));
+                DateFiltration();
+            }
+        }
+        private string _departmentFilter;
+        public string DepartmentFilter
+        {
+            get => _departmentFilter;
+            set
+            {
+                _departmentFilter = value;
+                OnPropertyChanged(nameof(DepartmentFilter));
+                DepartmentFiltration();
+            }
+        }
         #endregion
         #region Commands
         public ICommand SaveDataGridCommand { get; }
@@ -67,6 +118,7 @@ namespace DSManager.ViewModel
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
         public ICommand FilterCommand {  get; }
+        public ICommand ClearFilterCommand { get; }
         #endregion
 
         public MainWindowViewModel(IWindowService windowService)
@@ -88,6 +140,7 @@ namespace DSManager.ViewModel
             UndoCommand = new RelayCommand(HistoryManager.Undo);
             RedoCommand = new RelayCommand(HistoryManager.Redo);
             FilterCommand = new RelayCommand(Filter);
+            ClearFilterCommand = new RelayCommand(ClearFilter);
         }
         private void OpenAddNewEntryWindow()
         {
@@ -101,6 +154,7 @@ namespace DSManager.ViewModel
             {
                 Entries.Add(entry);
             }
+            CollectionService.ReplaceItemsInCollection(EntriesTemp, Entries);
         }
         public async Task RefreshTable()
         {
@@ -172,6 +226,7 @@ namespace DSManager.ViewModel
         }
         public void Filter()
         {
+            //Если удалить или добавить запись при фильтрации она не отобразится после закрытия фильтра
             if(DatePickerVisibility == Visibility.Visible)
             {
                 DatePickerVisibility = Visibility.Collapsed;
@@ -186,6 +241,67 @@ namespace DSManager.ViewModel
             {
                 DepartmentsFilterVisibility= Visibility.Collapsed;
                 DatePickerVisibility= Visibility.Visible;
+            }
+        }
+        public void ClearFilter()
+        {
+            if (DatePickerVisibility == Visibility.Visible)
+            {
+                StartDateFilter = null;
+                EndDateFilter = null;
+            }
+            else if (FIOFilterVisibility == Visibility.Visible)
+            {
+                FioFilter = "";
+            }
+            else
+            {
+                DepartmentFilter = "";
+            }
+            CollectionService.ReplaceItemsInCollection(Entries, EntriesTemp);
+        }
+        public void FioFiltration()
+        {
+            if (string.IsNullOrEmpty(FioFilter))
+            {
+                CollectionService.ReplaceItemsInCollection(Entries, EntriesTemp);
+            }
+            else
+            {
+                var filteredEntries = EntriesTemp
+                    .Where(entry => entry.FIO != null && entry.FIO.Contains(FioFilter, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                CollectionService.ReplaceItemsInCollection(Entries, filteredEntries);
+            }
+        }
+        public void DateFiltration()
+        {
+            var filteredEntries = EntriesTemp.AsEnumerable();
+            if (StartDateFilter.HasValue)
+            {
+                filteredEntries = filteredEntries
+                    .Where(entry => entry.Start.HasValue && entry.Start.Value >= StartDateFilter.Value);
+            }
+            if (EndDateFilter.HasValue)
+            {
+                filteredEntries = filteredEntries
+                    .Where(entry => entry.End.HasValue && entry.End.Value <= EndDateFilter.Value);
+            }
+            CollectionService.ReplaceItemsInCollection(Entries, filteredEntries);
+        }
+
+        private void DepartmentFiltration()
+        {
+            var filteredEntries = EntriesTemp.AsEnumerable();
+            if (!string.IsNullOrEmpty(DepartmentFilter) && DepartmentsFilterVisibility == Visibility.Visible)
+            {
+                filteredEntries = filteredEntries
+                    .Where(entry => entry.Department != null && entry.Department.Contains(DepartmentFilter, StringComparison.OrdinalIgnoreCase));
+                CollectionService.ReplaceItemsInCollection(Entries, filteredEntries);
+            }
+            else
+            {
+                CollectionService.ReplaceItemsInCollection(Entries, EntriesTemp);
             }
         }
         private void UpdateUndoRedoState()

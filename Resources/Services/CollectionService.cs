@@ -17,6 +17,7 @@ namespace DSManager.Resources.Services
                 collection.Add(item);
             }
         }
+
         public static async Task ReplaceItemsInCollectionAsync<T>(ObservableCollection<T> collection, IAsyncEnumerable<T> items)
         {
             collection.Clear();

@@ -58,25 +58,33 @@
                     <DatePicker Foreground="White"
                                 VerticalContentAlignment="Bottom"
                                 VerticalAlignment="Bottom"
-                                Visibility="{Binding DatePickerVisibility}"/>
+                                Visibility="{Binding DatePickerVisibility, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                SelectedDate="{Binding StartDateFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
                     <DatePicker Foreground="White"
                                 VerticalContentAlignment="Bottom"
                                 VerticalAlignment="Bottom"
-                                Visibility="{Binding DatePickerVisibility}"/>
-                    <TextBox Visibility="{Binding FIOFilterVisibility}"
+                                Visibility="{Binding DatePickerVisibility, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                SelectedDate="{Binding EndDateFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                    <TextBox Visibility="{Binding FIOFilterVisibility, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                              Width="160"
                              Foreground="White"
                              VerticalAlignment="Bottom"
                              materialDesign:HintAssist.Hint="Введите ФИО"
                              HorizontalContentAlignment="Center"
                              VerticalContentAlignment="Bottom"
-                             Style="{DynamicResource MaterialDesignFloatingHintTextBox}"/>
-                    <ComboBox Visibility="{Binding DepartmentsFilterVisibility}"
+                             Style="{DynamicResource MaterialDesignFloatingHintTextBox}"
+                             Text="{Binding FioFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                    <ComboBox Visibility="{Binding DepartmentsFilterVisibility, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                               ItemsSource="{Binding Source={StaticResource Departments}}"
                               Foreground="White"
                               Width="160"
                               HorizontalAlignment="Center"
-                              VerticalAlignment="Bottom"/>
+                              VerticalAlignment="Bottom"
+                              SelectedItem="{Binding DepartmentFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+                    <Button Style="{DynamicResource BaseButtonStyle}"
+                            Content="{materialDesign:PackIcon Kind=Clear,Size=40}"
+                            Command="{Binding ClearFilterCommand}"
+                            VerticalAlignment="Center"/>
                 </StackPanel>
             </StackPanel>
             <DataGrid x:Name="Table" Grid.Row="1" 
