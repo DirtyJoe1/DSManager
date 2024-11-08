@@ -27,6 +27,7 @@ namespace DSManager
             WindowService windowService = new();
             DataContext = new MainWindowViewModel(windowService);
         }
+
         //Пофиксить утечку памяти
         private async void Table_Sorting(object sender, DataGridSortingEventArgs e)
         {
@@ -51,6 +52,18 @@ namespace DSManager
                         : data.OrderByDescending(x => x.GetType().GetProperty(propertyName).GetValue(x)).ToList();
                 });
                 Table.ItemsSource = new ObservableCollection<DataModel>(sortedData);
+            }
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (DataContext is MainWindowViewModel vm)
+            {
+                bool shouldClose = vm.Exit();
+                if (!shouldClose)
+                {
+                    e.Cancel = true;
+                }
             }
         }
     }

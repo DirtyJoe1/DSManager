@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace DSManager.Resources.Services
 {
+    //Опять же весь класс описывать не хочется поэтому в кратце
+    //История действий, записывается в два стака(я надеюсь ты помнишь, что это такое ;)   )
+    //Основной функционал находится в интерфейсе IAction, за пояснениями туда
     public static class HistoryManager
     {
         public static event Action UndoRedoStateChanged;

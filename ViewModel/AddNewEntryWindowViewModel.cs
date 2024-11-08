@@ -123,8 +123,16 @@ namespace DSManager.ViewModel
 
         private void CreateEntry()
         {
-            //Пофиксить создание, если запись в файл не успешна
-            //Проверку на налучие такого же пользователя
+            if (string.IsNullOrEmpty(FioField) || string.IsNullOrEmpty(SelectedDepartment) || string.IsNullOrEmpty(SelectedStatus))
+            {
+                MessageBox.Show("ФИО, Отделение/Подразделение и/или Cтатус пусты!");
+                return;
+            }
+            if (Setup <= Start || Setup >= End)
+            {
+                MessageBox.Show("Одно или несколько полей дат пусты или имеют невозможные значения");
+                return;
+            }
             var newEntry = new DataModel
             {
                 Id = _mainWindowViewModel.Entries.Count + 1,
@@ -135,6 +143,11 @@ namespace DSManager.ViewModel
                 End = End,
                 Status = (Statuses)Enum.Parse(typeof(Statuses), SelectedStatus)
             };
+            if (_mainWindowViewModel.Entries.Any(x => x.FIO == FioField))
+            {
+                MessageBox.Show("Кажется такой пользователь уже существует");
+                return;
+            }
             HistoryManager.Execute(new AddAction(newEntry, _mainWindowViewModel.Entries));
             EntryCreated?.Invoke(newEntry);
             MessageBox.Show("Запись создана");

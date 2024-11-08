@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 
 namespace DSManager.Resources.Services
 {
+    //Проблемный класс, который реализует действия отмены и возврата элементов
+    //Когда добавляешь новый элемент, вроде все прекрасно работает, потому что используется AddAction
+    //А вот с DeleteAction, какая-то беда, при возврате элемента, его индекс и индекс ближайшего элемента становится одинаковым
+    //Я так и не смог это пофиксить, может у тебя получится, а я просто тупил :)
     public interface IAction
     {
         void Undo();
@@ -63,6 +67,7 @@ namespace DSManager.Resources.Services
                 ExcelService.AddRow(_data.FIO, _data.Department, _data.Setup, _data.Start, _data.End, _data.Status);
             }
         }
+        //Или может эту, если задуматься, то скорее всего эту
         public void Redo()
         {
             if (_collection.Contains(_data))

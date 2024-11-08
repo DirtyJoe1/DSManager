@@ -10,6 +10,7 @@
         xmlns:s="clr-namespace:System;assembly=mscorlib"
         d:DataContext="{d:DesignInstance Type=viewmodel:MainWindowViewModel}"
         mc:Ignorable="d"
+        Closing="Window_Closing"
         Title="BDSM" Height="600" Width="1200">
     <Window.Resources>
         <CollectionViewSource x:Key="Departments"

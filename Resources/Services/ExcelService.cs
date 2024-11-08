@@ -12,9 +12,14 @@ namespace DSManager.Resources.Services
     public static class ExcelService
     {
         public static readonly string ExcelFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "Files", "data.xlsx");
+        //Не спрашивай, как этот метод работает, одному богу известно
+        //Он преобразует содержимое DataGrid в DataTable, чтобы потом его записать в файл
         public static DataTable GetDataTableFromDataGrid<T>(IEnumerable list)
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            //Важная строчка, без неё прога всегда крашится
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial; 
+            //Поэтому, если захочешь сделать новый метод, который работает с Excel файлом, обязательно впиши её
+            
             PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(T));
             DataTable table = new();
             for (int i = 0; i < props.Count; i++)
@@ -43,77 +48,105 @@ namespace DSManager.Resources.Services
                 }
                 table.Rows.Add(values);
             }
-
             return table;
         }
+        //Метод, чтобы читать пользователей, которые в первом листе файла
         public static async IAsyncEnumerable<DataModel> ReadExcelFile(string filePath)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(filePath);
             var worksheet = package.Workbook.Worksheets[0];
-            for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
+            if (worksheet.Dimension != null)
             {
-                await Task.Yield();
-                string endValue = worksheet.Cells[row, 5].Value?.ToString();
-                DateTime? endDate = DateTime.TryParse(endValue, out DateTime parsedEndDate) ? parsedEndDate : null;
-                string startValue = worksheet.Cells[row, 4].Value?.ToString();
-                DateTime? startDate = DateTime.TryParse(startValue, out DateTime parsedStartDate) ? parsedStartDate : null;
-                string setupValue = worksheet.Cells[row, 6].Value?.ToString();
-                DateTime? setupDate = DateTime.TryParse(setupValue, out DateTime parsedSetupDate) ? parsedSetupDate : null;
-                Statuses status;
-                if (endDate.HasValue && endDate <= DateTime.Now)
+                for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
                 {
-                    status = Statuses.Закончился;//Если получили null или дата прошла при чтении даты окончания, то считаем, что статус Закончился
-                }
-                else
-                {
-                    if (Enum.TryParse<Statuses>(worksheet.Cells[row, 7].Value?.ToString(), out var parsedStatus))
+                    await Task.Yield();
+                    string endValue = worksheet.Cells[row, 5].Value?.ToString();
+                    DateTime? endDate = DateTime.TryParse(endValue, out DateTime parsedEndDate) ? parsedEndDate : null;
+                    string startValue = worksheet.Cells[row, 4].Value?.ToString();
+                    DateTime? startDate = DateTime.TryParse(startValue, out DateTime parsedStartDate) ? parsedStartDate : null;
+                    string setupValue = worksheet.Cells[row, 6].Value?.ToString();
+                    DateTime? setupDate = DateTime.TryParse(setupValue, out DateTime parsedSetupDate) ? parsedSetupDate : null;
+                    Statuses status;
+                    if (endDate.HasValue && endDate <= DateTime.Now)
                     {
-                        status = parsedStatus;
+                        status = Statuses.Закончился;//Если получили null или дата прошла при чтении даты окончания, то считаем, что статус Закончился
                     }
                     else
                     {
-                        status = Statuses.Подан; //Если получили null при чтении статуса, то считаем, что статус Подан
+                        if (Enum.TryParse<Statuses>(worksheet.Cells[row, 7].Value?.ToString(), out var parsedStatus))
+                        {
+                            status = parsedStatus;
+                        }
+                        else
+                        {
+                            status = Statuses.Подан; //Если получили null при чтении статуса, то считаем, что статус Подан
+                        }
                     }
-                }
 
-                yield return new DataModel
-                {
-                    Id = row,
-                    FIO = worksheet.Cells[row, 2].Value?.ToString(),
-                    Department = worksheet.Cells[row, 3].Value?.ToString(),
-                    Start = startDate,
-                    End = endDate,
-                    Setup = setupDate,
-                    Status = status
-                };
+                    yield return new DataModel
+                    {
+                        Id = row,
+                        FIO = worksheet.Cells[row, 2].Value?.ToString(),
+                        Department = worksheet.Cells[row, 3].Value?.ToString(),
+                        Start = startDate,
+                        End = endDate,
+                        Setup = setupDate,
+                        Status = status
+                    };
+                }
             }
+            else
+            {
+                yield break;
+            }
+            
         }
-        public static IEnumerable<string> ReadDepartments()
+        //Метод чтобы читать отделения/подразделения, которые во втором листе файла
+        public static IEnumerable<string> ReadDepartments() 
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[1];
-            for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
+            if (worksheet.Dimension != null)
             {
-                yield return worksheet.Cells[row, 1].Value.ToString();
+                for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
+                {
+                    yield return worksheet.Cells[row, 1].Value.ToString();
+                }
+            }
+            else
+            {
+                yield break;
             }
         }
+        //Тут добавляются отделения/подразделения
         public static void AddDepartment(string department)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[1];
-            worksheet.Cells[worksheet.Dimension.End.Row + 1, 1].Value = department;
+            if (worksheet.Dimension != null)
+            {
+                worksheet.Cells[worksheet.Dimension.End.Row + 1, 1].Value = department;
+            }
+            else
+            { 
+                worksheet.Cells[1, 1].Value = department;
+            }
             package.Save();
         }
-        public static int GetRowCount()//Думал, что может где-то пригодится, пусть будет
+        //Думал, что может где-то пригодится, пусть будет
+        //Считает количество строк в файле, но есть удобный worksheet.Dimension.End.Row
+        //Так что оказался без надобности
+        public static int GetRowCount()
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[0];
             return worksheet.Dimension.End.Row;
         }
+        //Метод сохранения DataGrid в файл 
         public static void SaveDataGrid(ObservableCollection<DataModel> data, bool backup)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
@@ -132,9 +165,12 @@ namespace DSManager.Resources.Services
                 rowCount++;
             }
             package.Save();
+            //Штука чтобы сделать резервную копию, она в bin находится, название data_temp.xlsx
+            //Создается только при выходе из программы, когда пользователь выбирает "Да" на предложение сохранить изменения
             if (backup)
                 package.SaveAs(ExcelFilePath.Replace(".xlsx", "_temp.xlsx"));
         }
+        //Метод, который вызывается из ViewModel, тут есть проверки 
         public static void AddRow(string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
             if (string.IsNullOrEmpty(fio) || string.IsNullOrEmpty(otdel) || (status == null))
@@ -149,12 +185,17 @@ namespace DSManager.Resources.Services
             }
             AddData(fio, otdel, setup, start, end, status);
         }
+        //Простое добавление строки в конец
         public static void AddData(string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             using var package = new ExcelPackage(ExcelFilePath);
             var worksheet = package.Workbook.Worksheets[0];
-            var lastrow = worksheet.Dimension.Rows + 1;
+            int lastrow = 1;
+            if (worksheet.Dimension != null)
+            {
+                lastrow = worksheet.Dimension.Rows + 1;
+            }
             worksheet.Cells[lastrow, 1].Value = lastrow;
             worksheet.Cells[lastrow, 2].Value = fio;
             worksheet.Cells[lastrow, 3].Value = otdel;
@@ -164,6 +205,7 @@ namespace DSManager.Resources.Services
             worksheet.Cells[lastrow, 7].Value = status.ToString();
             package.Save();
         }
+        //Вставка строки в определенную позицию
         public static void InsertRow(int rowIndex, string fio, string otdel, DateTime? setup, DateTime? start, DateTime? end, object status)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
@@ -177,7 +219,6 @@ namespace DSManager.Resources.Services
             worksheet.Cells[rowIndex + 1, 5].Value = $"{end:dd.MM.yyyy}";
             worksheet.Cells[rowIndex + 1, 6].Value = $"{setup:dd.MM.yyyy}";
             worksheet.Cells[rowIndex + 1, 7].Value = status.ToString();
-
             package.Save();
         }
         public static void DeleteRowFromExcelFile(int rowIndex, int windex)
@@ -188,6 +229,7 @@ namespace DSManager.Resources.Services
             worksheet.DeleteRow(rowIndex);
             package.Save();
         }
+        //При импорте нет проверок на адекватность полей :)
         public static async Task AppendDataFromExcel(string sourceFilePath, string targetFilePath)
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
@@ -196,7 +238,11 @@ namespace DSManager.Resources.Services
             var sourceWorksheet = sourcePackage.Workbook.Worksheets[0];
             var targetWorksheet = targetPackage.Workbook.Worksheets[0];
             var sourceData = await ReadExcelFile(sourceFilePath).ToListAsync();
-            int maxRows = targetWorksheet.Dimension.End.Row;
+            int maxRows = 0;
+            if (targetWorksheet.Dimension != null)
+            {
+                maxRows = targetWorksheet.Dimension.End.Row;
+            }
             for (int i = 1; i <= sourceData.Count; i++)
             {
                 var rowData = sourceData[i - 1];
